@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-int are_strings_equal(char *str_a, char *str_b);
+bool are_strings_equal(char *str_a, char *str_b);
 unsigned long get_current_time(void);
 
 #endif // STD_LIB_UTILS_H
