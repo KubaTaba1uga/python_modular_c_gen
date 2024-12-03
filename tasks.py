@@ -7,12 +7,17 @@ import subprocess
 from invoke import task
 
 ###############################################
-#                Public API                   #
+#                Constants                    #
 ###############################################
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 SRC_PATH = os.path.join(ROOT_PATH, "src")
 BUILD_PATH = os.path.join(ROOT_PATH, "build")
-CC = "openscad"
+REQUIREMENTS_FILE = os.path.join(ROOT_PATH, "app-requirements.txt")
+PYC_PARSER_REPO = "https://github.com/eliben/pycparser.git"
+
+###############################################
+#                Public API                   #
+###############################################
 
 
 @task
@@ -41,8 +46,8 @@ def clean(c, bytecode=False, extra=""):
         patterns.append(extra)
 
     for pattern in patterns:
-        _pr_info("Removing pattern {}".format(pattern))
-        c.run("rm -vrf {}".format(pattern))
+        _pr_info(f"Removing pattern {pattern}")
+        c.run(f"rm -vrf {pattern}", warn=True)
 
 
 @task
@@ -65,6 +70,69 @@ def open(c):
         inv open
     """
     raise NotImplementedError()
+
+
+@task
+def install(c):
+    """
+    Install Python requirements from app-requirements.txt.
+
+    Usage:
+        inv install-requirements
+    """
+    if not os.path.exists(REQUIREMENTS_FILE):
+        _pr_error(f"Requirements file not found: {REQUIREMENTS_FILE}")
+        return
+
+    _pr_info(f"Installing requirements from {REQUIREMENTS_FILE}")
+    try:
+        c.run(f"pip install -r {REQUIREMENTS_FILE}", pty=True)
+    except Exception as e:
+        _pr_error(f"Failed to install requirements: {str(e)}")
+
+    fetch_pycparser(c)
+
+
+def fetch_pycparser(c, release="v2.22"):
+    """
+    Clone the pycparser repository into the build directory and checkout a specific release.
+
+    Args:
+        release (str): The release version to checkout. Defaults to "v2.22".
+
+    Usage:
+        inv fetch-pycparser --release=v2.22
+    """
+    pycparser_dir = os.path.join(BUILD_PATH, "pycparser")
+
+    # Ensure the build directory exists
+    os.makedirs(BUILD_PATH, exist_ok=True)
+
+    if os.path.exists(pycparser_dir):
+        _pr_info(
+            f"pycparser already exists in {pycparser_dir}. Fetching latest updates..."
+        )
+        try:
+            with c.cd(pycparser_dir):
+                c.run("git pull", pty=True)
+        except Exception as e:
+            _pr_error(f"Failed to fetch pycparser updates: {str(e)}")
+            return
+    else:
+        _pr_info(f"Cloning pycparser into {BUILD_PATH}")
+        try:
+            c.run(f"git clone {PYC_PARSER_REPO} {pycparser_dir}", pty=True)
+        except Exception as e:
+            _pr_error(f"Failed to clone pycparser: {str(e)}")
+            return
+
+    # Checkout the specified release
+    try:
+        with c.cd(pycparser_dir):
+            _pr_info(f"Checking out release {release}")
+            c.run(f"git checkout release_{release}", pty=True)
+    except Exception as e:
+        _pr_error(f"Failed to checkout release {release}: {str(e)}")
 
 
 ###############################################
