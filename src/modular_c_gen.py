@@ -14,4 +14,5 @@ def generate_boilercode(src_header_path, output_dir):
 
     c_code_ast = generate_ast(src_header_path)
 
-    print(c_code_ast)
+    c_code_ast.show()
+    # print(c_code_ast)
