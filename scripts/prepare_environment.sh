@@ -32,7 +32,7 @@ TEMP_RCFILE=$(mktemp)
 # Add commands to the temporary file
 echo "source \"$VENV_PATH/bin/activate\"" > "$TEMP_RCFILE"
 ## Substitute .venv with .lt-venv in the export PS1 command using awk
-echo 'export PS1=$(echo $PS1 | awk "{gsub(\".venv\", \".new-repo\"); print}")' >> "$TEMP_RCFILE"
+echo 'export PS1=$(echo $PS1 | awk "{gsub(\".venv\", \".mod-c\"); print}")' >> "$TEMP_RCFILE"
 echo 'export PS1="$(echo $PS1) "' >> "$TEMP_RCFILE"
 
 # Start a new shell using the temporary initialization file
